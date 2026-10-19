@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cystematic – 36 sqm Stall 3D Model</title>
+<style>
+html,body{margin:0;height:100%;background:#0b0f16;color:#e6edf3;font:14px system-ui,Arial,sans-serif;overflow:hidden}
+canvas{display:block}
+#t{position:fixed;top:10px;left:14px;pointer-events:none;text-shadow:0 1px 4px #000}
+#t b{font-size:17px;color:#3fc9ff}
+#bar{position:fixed;left:0;right:0;bottom:0;display:flex;flex-wrap:wrap;gap:6px;justify-content:center;padding:10px 10px calc(10px + env(safe-area-inset-bottom,0px));background:linear-gradient(transparent,#000a)}
+button{background:#12202c;color:#e6edf3;border:1px solid #3fc9ff;border-radius:6px;padding:7px 12px;font-size:13px;cursor:pointer}
+button:hover,button.on{background:#3fc9ff;color:#04121a}
+</style></head><body>
+<div id="t"><b>Cystematic</b> – 36 sqm stall (6 × 6 m, corner, open South + East)<br>Drag to orbit · scroll or pinch to zoom · right-drag to pan</div>
+<div id="bar">
+<button data-v="p">Perspective</button><button data-v="t">Top</button><button data-v="f">Front</button><button data-v="s">Side wall</button>
+<button id="bd">Dimensions</button><button id="bs">SMD / Panaflex: SMD</button>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+const CY=0x3fc9ff;
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x0b0f16);scene.fog=new THREE.Fog(0x0b0f16,25,60);
+const cam=new THREE.PerspectiveCamera(45,innerWidth/innerHeight,0.1,100);
+const ren=new THREE.WebGLRenderer({antialias:true});ren.setPixelRatio(Math.min(devicePixelRatio,2));ren.setSize(innerWidth,innerHeight);
+document.body.appendChild(ren.domElement);
+const ctl=new THREE.OrbitControls(cam,ren.domElement);ctl.enableDamping=true;ctl.maxPolarAngle=Math.PI/2.02;ctl.minDistance=3;ctl.maxDistance=30;
+function view(p,t){cam.position.set(...p);ctl.target.set(...t);ctl.update();}
+const V={p:[[11,5.5,11],[3,1.4,3]],t:[[3,17,3.01],[3,0,3]],f:[[3,1.8,16],[3,1.6,3]],s:[[15,1.8,3],[0,1.8,3]]};
+view(...V.p);
+document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>view(...V[b.dataset.v]));
+
+scene.add(new THREE.AmbientLight(0xffffff,0.55));
+const dl=new THREE.DirectionalLight(0xffffff,0.5);dl.position.set(8,12,10);scene.add(dl);
+[[1.5,3.3,1.5],[4.5,3.3,1.5],[1.5,3.3,4.5],[4.5,3.3,4.5]].forEach(p=>{const l=new THREE.PointLight(0xffffff,0.5,12);l.position.set(...p);scene.add(l)});
+[[1,2,3],[3.1,1.6,1.2],[5,1.6,5]].forEach(p=>{const l=new THREE.PointLight(CY,0.7,8);l.position.set(...p);scene.add(l)});
+
+function tex(w,h,fn){const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');fn(g,w,h,0);const t=new THREE.CanvasTexture(c);t.anisotropy=8;t.userData={g,w,h,fn};return t;}
+const logo=(g,w,h,size)=>{g.fillStyle='#3fc9ff';g.font='bold '+size+'px Arial';g.textAlign='center';g.textBaseline='middle';g.fillText('Cystematic',w/2,h/2);};
+const box=(w,h,d,m,x,y,z)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);scene.add(o);return o;};
+const plane=(w,h,m,x,y,z,ry)=>{const o=new THREE.Mesh(new THREE.PlaneGeometry(w,h),m);o.position.set(x,y,z);o.rotation.y=ry||0;scene.add(o);return o;};
+const edge=(o,c)=>o.add(new THREE.LineSegments(new THREE.EdgesGeometry(o.geometry),new THREE.LineBasicMaterial({color:c||CY})));
+const black=new THREE.MeshStandardMaterial({color:0x0a0a0c,roughness:0.5,metalness:0.2});
+const gloss=new THREE.MeshStandardMaterial({color:0x040406,roughness:0.1,metalness:0.6});
+const led=new THREE.MeshBasicMaterial({color:CY});
+const white=new THREE.MeshStandardMaterial({color:0xf2f2f2,roughness:0.6});
+
+// hall floor + organiser partition
+const hf=new THREE.Mesh(new THREE.PlaneGeometry(80,80),new THREE.MeshStandardMaterial({color:0x2b2e36,roughness:0.9}));hf.rotation.x=-Math.PI/2;scene.add(hf);
+box(8,3.5,0.05,new THREE.MeshStandardMaterial({color:0xcfd3d9}),3,1.75,-0.03);
+
+// platform 6x6x0.05 + LED edge on open sides
+box(6,0.05,6,gloss,3,0.025,3);
+box(6.04,0.02,0.03,led,3,0.03,6.02);box(0.03,0.02,6.04,led,6.02,0.03,3);
+
+// side wall (West) 6000x3500x150 incl. platform
+const wall=box(0.15,3.45,6,black,0.075,1.775,3);edge(wall);
+const fas=box(0.25,0.4,6,new THREE.MeshStandardMaterial({color:0x0b2a3c,roughness:0.4}),0.125,3.3,3);edge(fas);
+plane(6,0.4,new THREE.MeshBasicMaterial({map:tex(1800,120,(g,w,h)=>{g.fillStyle='#0b2a3c';g.fillRect(0,0,w,h);logo(g,w,h,90);})}),0.252,3.3,3,Math.PI/2);
+// SMD
+const smdTex=tex(1280,720,()=>{}),panTex=tex(1280,720,(g,w,h)=>{const gr=g.createLinearGradient(0,0,w,h);gr.addColorStop(0,'#06121c');gr.addColorStop(1,'#0e4466');g.fillStyle=gr;g.fillRect(0,0,w,h);logo(g,w,h,160);g.fillStyle='#9fe6ff';g.font='36px Arial';g.fillText('Backlit panaflex print',w/2,h/2+130);});
+const smdMat=new THREE.MeshBasicMaterial({map:smdTex});
+plane(3.2,1.8,smdMat,0.16,2.15,3,Math.PI/2);
+[[3.3,0.05,0,0.925],[3.3,0.05,0,-0.925]].forEach(a=>box(0.03,0.05,3.3,led,0.165,2.15+a[3],3));
+[1.625,-1.625].forEach(z=>box(0.03,1.8,0.05,led,0.165,2.15,3+z));
+let useSMD=true;
+document.getElementById('bs').onclick=e=>{useSMD=!useSMD;smdMat.map=useSMD?smdTex:panTex;smdMat.needsUpdate=true;e.target.textContent='SMD / Panaflex: '+(useSMD?'SMD':'Panaflex');};
+function drawSMD(t){const g=smdTex.userData.g,w=1280,h=720;g.fillStyle='#06121c';g.fillRect(0,0,w,h);
+const rg=g.createRadialGradient(w/2+Math.sin(t)*300,h/2+Math.cos(t*.8)*120,20,w/2,h/2,700);rg.addColorStop(0,'#1486c4');rg.addColorStop(1,'#06121c');g.fillStyle=rg;g.fillRect(0,0,w,h);
+g.fillStyle='#ffffff22';for(let x=20;x<w;x+=24)for(let y=20;y<h;y+=24)g.fillRect(x,y,3,3);
+logo(g,w,h,160);smdTex.needsUpdate=true;}
+
+// 3 backlit poster frames on North edge
+[1.2,3.1,5.0].forEach((x,i)=>{
+const f=box(1.2,2.4,0.15,black,x,1.35,0.175);edge(f);
+plane(1,2,new THREE.MeshBasicMaterial({map:tex(500,1000,(g,w,h)=>{const gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,'#0e4466');gr.addColorStop(1,'#06121c');g.fillStyle=gr;g.fillRect(0,0,w,h);g.save();g.translate(0,0);logo(g,w,260,70);g.restore();g.fillStyle='#e6f7ff';g.font='bold 54px Arial';g.textAlign='center';g.fillText('POSTER '+(i+1),w/2,h/2+40);g.font='28px Arial';g.fillText('Backlit SEG fabric 1000 × 2000',w/2,h/2+90);})}),x,1.35,0.2515);
+});
+
+// corner counter (L-shape, R300 outer corner)
+const s=new THREE.Shape();s.moveTo(5.4,-3.6);s.lineTo(6,-3.6);s.lineTo(6,-5.7);s.quadraticCurveTo(6,-6,5.7,-6);s.lineTo(3.6,-6);s.lineTo(3.6,-5.4);s.lineTo(5.4,-5.4);s.closePath();
+const cg=new THREE.ExtrudeGeometry(s,{depth:1,bevelEnabled:false});
+const ctr=new THREE.Mesh(cg,new THREE.MeshStandardMaterial({color:0x15151a,roughness:0.35,metalness:0.3}));ctr.rotation.x=-Math.PI/2;ctr.position.y=0.05;scene.add(ctr);edge(ctr);
+const cl=new THREE.Mesh(new THREE.ExtrudeGeometry(s,{depth:0.03,bevelEnabled:false}),led);cl.rotation.x=-Math.PI/2;cl.position.y=0.05;cl.scale.set(1.01,1.01,1);cl.position.x=-0.03;cl.position.z=0.03;scene.add(cl);
+const cLogo=new THREE.MeshBasicMaterial({map:tex(512,256,(g,w,h)=>{g.fillStyle='#0b2a3c';g.fillRect(0,0,w,h);g.strokeStyle='#3fc9ff';g.lineWidth=6;g.strokeRect(6,6,w-12,h-12);logo(g,w,h,76);})});
+plane(1.2,0.6,cLogo,4.5,0.6,6.003,0);plane(1.2,0.6,cLogo,6.003,0.6,4.5,Math.PI/2);
+
+// meeting area: 2 tables Ø750, 4 chairs
+function table(x,z){const g=new THREE.Group();const m=(geo,y)=>{const o=new THREE.Mesh(geo,white);o.position.y=y;g.add(o)};
+m(new THREE.CylinderGeometry(0.375,0.375,0.03,32),0.75);m(new THREE.CylinderGeometry(0.03,0.03,0.72,12),0.39);m(new THREE.CylinderGeometry(0.25,0.25,0.03,32),0.015);g.position.set(x,0.05,z);scene.add(g);}
+const wood=new THREE.MeshStandardMaterial({color:0xb98a55});
+function chair(x,z,ry){const g=new THREE.Group();const a=(w,h,d,m,px,py,pz)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(px,py,pz);g.add(o)};
+a(0.42,0.04,0.42,white,0,0.45,0);a(0.42,0.38,0.03,white,0,0.68,-0.2);[[-.18,-.18],[.18,-.18],[-.18,.18],[.18,.18]].forEach(p=>a(0.03,0.43,0.03,wood,p[0],0.22,p[1]));
+g.position.set(x,0.05,z);g.rotation.y=ry;scene.add(g);}
+[3.375,4.625].forEach(z=>{table(2.125,z);chair(1.5,z,Math.PI/2);chair(2.75,z,-Math.PI/2);});
+
+// dimensions overlay
+const dims=new THREE.Group();scene.add(dims);dims.visible=false;
+function lbl(t,x,y,z){const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex(256,64,(g,w,h)=>{g.fillStyle='#ffd23f';g.font='bold 38px Arial';g.textAlign='center';g.textBaseline='middle';g.fillText(t,w/2,h/2);}),depthTest:false}));sp.scale.set(1.6,0.4,1);sp.position.set(x,y,z);dims.add(sp);}
+function ln(a,b){const l=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(...a),new THREE.Vector3(...b)]),new THREE.LineBasicMaterial({color:0xffd23f,depthTest:false}));dims.add(l);}
+ln([0,0.06,6.5],[6,0.06,6.5]);lbl('6000',3,0.35,6.5);ln([6.5,0.06,0],[6.5,0.06,6]);lbl('6000',6.5,0.35,3);
+ln([-0.4,0.05,6.3],[-0.4,3.5,6.3]);lbl('3500',-0.4,3.8,6.3);ln([3.6,0.06,6.3],[6,0.06,6.3]);lbl('2400',4.8,0.35,6.3);
+lbl('SMD 3200 × 1800',1.2,2.15,3);lbl('Frame 1200 × 2400',3.1,2.9,0.6);lbl('Counter H1000',4.5,1.35,6.3);
+document.getElementById('bd').onclick=e=>{dims.visible=!dims.visible;e.target.classList.toggle('on',dims.visible);};
+
+addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();ren.setSize(innerWidth,innerHeight);});
+(function loop(t){requestAnimationFrame(loop);if(useSMD)drawSMD(t/1000);ctl.update();ren.render(scene,cam);})(0);
+</script></body></html>
